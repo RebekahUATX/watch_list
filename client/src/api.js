@@ -1,0 +1,123 @@
+const API = '/api';
+
+function getOwnerId() {
+  let id = localStorage.getItem('watchlist_owner_id');
+  if (!id) {
+    id = 'user_' + Math.random().toString(36).slice(2, 12);
+    localStorage.setItem('watchlist_owner_id', id);
+  }
+  return id;
+}
+
+const headers = () => ({
+  'Content-Type': 'application/json',
+  'X-Owner-Id': getOwnerId(),
+});
+
+export async function getImageConfig() {
+  const res = await fetch(`${API}/search/config`);
+  if (!res.ok) throw new Error('Failed to load config');
+  return res.json();
+}
+
+export async function getMovieGenres() {
+  const res = await fetch(`${API}/genres/movies`);
+  if (!res.ok) throw new Error('Failed to load genres');
+  return res.json();
+}
+
+export async function getTvGenres() {
+  const res = await fetch(`${API}/genres/tv`);
+  if (!res.ok) throw new Error('Failed to load genres');
+  return res.json();
+}
+
+export async function discoverMovies(params) {
+  const q = new URLSearchParams(params).toString();
+  const res = await fetch(`${API}/search/movies?${q}`);
+  if (!res.ok) throw new Error('Search failed');
+  return res.json();
+}
+
+export async function discoverTv(params) {
+  const q = new URLSearchParams(params).toString();
+  const res = await fetch(`${API}/search/tv?${q}`);
+  if (!res.ok) throw new Error('Search failed');
+  return res.json();
+}
+
+export async function searchMovies(query, page = 1) {
+  const res = await fetch(`${API}/search/movies/query?q=${encodeURIComponent(query)}&page=${page}`);
+  if (!res.ok) throw new Error('Search failed');
+  return res.json();
+}
+
+export async function searchTv(query, page = 1) {
+  const res = await fetch(`${API}/search/tv/query?q=${encodeURIComponent(query)}&page=${page}`);
+  if (!res.ok) throw new Error('Search failed');
+  return res.json();
+}
+
+export async function getMyWatchlists() {
+  const res = await fetch(`${API}/watchlists/mine`, { headers: headers() });
+  if (!res.ok) throw new Error('Failed to load watchlists');
+  return res.json();
+}
+
+export async function getWatchlist(id) {
+  const res = await fetch(`${API}/watchlists/${id}`);
+  if (!res.ok) throw new Error('Failed to load watchlist');
+  return res.json();
+}
+
+export async function getWatchlistByShareCode(shareCode) {
+  const res = await fetch(`${API}/watchlists/shared/${encodeURIComponent(shareCode)}`);
+  if (!res.ok) throw new Error('Watchlist not found');
+  return res.json();
+}
+
+export async function createWatchlist(name, isShared = false) {
+  const res = await fetch(`${API}/watchlists`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ name, isShared }),
+  });
+  if (!res.ok) throw new Error('Failed to create watchlist');
+  return res.json();
+}
+
+export async function updateWatchlist(id, updates) {
+  const res = await fetch(`${API}/watchlists/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...headers() },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error('Failed to update');
+  return res.json();
+}
+
+export async function deleteWatchlist(id) {
+  const res = await fetch(`${API}/watchlists/${id}`, { method: 'DELETE', headers: headers() });
+  if (!res.ok) throw new Error('Failed to delete');
+}
+
+export async function addToWatchlist(listId, item) {
+  const res = await fetch(`${API}/watchlists/${listId}/items`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(item),
+  });
+  if (!res.ok) throw new Error('Failed to add');
+  return res.json();
+}
+
+export async function removeFromWatchlist(listId, type, tmdbId) {
+  const res = await fetch(`${API}/watchlists/${listId}/items/${type}/${tmdbId}`, {
+    method: 'DELETE',
+    headers: headers(),
+  });
+  if (!res.ok) throw new Error('Failed to remove');
+  return res.json();
+}
+
+export { getOwnerId };

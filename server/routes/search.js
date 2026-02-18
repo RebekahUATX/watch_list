@@ -1,0 +1,133 @@
+import { Router } from 'express';
+
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const API_KEY = process.env.TMDB_API_KEY;
+
+async function tmdb(path, query = {}) {
+  const params = new URLSearchParams({ api_key: API_KEY || '', ...query });
+  const url = `${TMDB_BASE}${path}?${params}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`TMDB ${res.status}`);
+  return res.json();
+}
+
+export const searchRouter = Router();
+
+// Discover movies with filters
+searchRouter.get('/movies', async (req, res) => {
+  try {
+    const {
+      page = 1,
+      sort_by = 'popularity.desc',
+      with_genres,
+      primary_release_year,
+      'primary_release_date.gte': gte,
+      'primary_release_date.lte': lte,
+      'vote_average.gte': voteGte,
+      'vote_count.gte': voteCountGte,
+      with_original_language,
+      with_keywords,
+    } = req.query;
+    const query = {
+      page,
+      sort_by,
+      language: 'en-US',
+    };
+    if (with_genres) query.with_genres = with_genres;
+    if (primary_release_year) query.primary_release_year = primary_release_year;
+    if (gte) query['primary_release_date.gte'] = gte;
+    if (lte) query['primary_release_date.lte'] = lte;
+    if (voteGte) query['vote_average.gte'] = voteGte;
+    if (voteCountGte) query['vote_count.gte'] = voteCountGte;
+    if (with_original_language) query.with_original_language = with_original_language;
+    if (with_keywords) query.with_keywords = with_keywords;
+
+    const data = await tmdb('/discover/movie', query);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Discover TV with filters
+searchRouter.get('/tv', async (req, res) => {
+  try {
+    const {
+      page = 1,
+      sort_by = 'popularity.desc',
+      with_genres,
+      first_air_date_year,
+      'first_air_date.gte': gte,
+      'first_air_date.lte': lte,
+      'vote_average.gte': voteGte,
+      'vote_count.gte': voteCountGte,
+      with_original_language,
+      with_status,
+    } = req.query;
+    const query = {
+      page,
+      sort_by,
+      language: 'en-US',
+    };
+    if (with_genres) query.with_genres = with_genres;
+    if (first_air_date_year) query.first_air_date_year = first_air_date_year;
+    if (gte) query['first_air_date.gte'] = gte;
+    if (lte) query['first_air_date.lte'] = lte;
+    if (voteGte) query['vote_average.gte'] = voteGte;
+    if (voteCountGte) query['vote_count.gte'] = voteCountGte;
+    if (with_original_language) query.with_original_language = with_original_language;
+    if (with_status) query.with_status = with_status;
+
+    const data = await tmdb('/discover/tv', query);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Text search movies
+searchRouter.get('/movies/query', async (req, res) => {
+  try {
+    const { q, page = 1 } = req.query;
+    if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
+    const data = await tmdb('/search/movie', { query: q.trim(), page });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Text search TV
+searchRouter.get('/tv/query', async (req, res) => {
+  try {
+    const { q, page = 1 } = req.query;
+    if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
+    const data = await tmdb('/search/tv', { query: q.trim(), page });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get image config (base URL for posters)
+searchRouter.get('/config', async (req, res) => {
+  try {
+    const data = await tmdb('/configuration');
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get movie or TV detail by id
+searchRouter.get('/detail/:type/:id', async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    if (type !== 'movie' && type !== 'tv') return res.status(400).json({ error: 'Invalid type' });
+    const path = type === 'movie' ? `/movie/${id}` : `/tv/${id}`;
+    const data = await tmdb(path, { language: 'en-US' });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});

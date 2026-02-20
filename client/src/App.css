@@ -7,44 +7,55 @@
 
 .header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  padding: 1rem 1.5rem;
-  background: rgba(0, 0, 0, 0.4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2.5rem 1.5rem 1.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.logo-wrap {
+  margin: 0 0 1.5rem 0;
 }
 
 .logo {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #fff;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 2.25rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.98);
   text-decoration: none;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.header nav {
+.logo:hover {
+  color: #d4af37;
+}
+
+.nav {
   display: flex;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .header nav a {
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
 }
 
 .header nav a:hover {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .header nav a.active {
-  color: #f5c518;
+  color: #d4af37;
 }
 
 .main {
   flex: 1;
-  padding: 1.5rem;
-  max-width: 1400px;
+  padding: 2.5rem 1.5rem;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
@@ -53,21 +64,26 @@
 .search-page h1,
 .watchlists-page h1,
 .shared-page h1 {
-  font-size: 1.75rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 500;
   margin-bottom: 0.5rem;
+  letter-spacing: 0.03em;
 }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
 }
 
 .search-form {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -98,9 +114,9 @@
 }
 
 .type-toggle button.active {
-  background: #f5c518;
-  color: #000;
-  border-color: #f5c518;
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.4);
 }
 
 .search-input {
@@ -136,17 +152,19 @@
 }
 
 .btn-primary {
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  background: #f5c518;
-  color: #000;
-  font-weight: 600;
-  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.25);
+  color: #d4af37;
+  font-weight: 500;
+  border: 1px solid rgba(212, 175, 55, 0.35);
   cursor: pointer;
+  letter-spacing: 0.03em;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #e6b80a;
+  background: rgba(212, 175, 55, 0.35);
+  border-color: rgba(212, 175, 55, 0.5);
 }
 
 .btn-primary:disabled {
@@ -172,10 +190,16 @@
 }
 
 .result-card {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.result-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .poster-wrap {
@@ -218,7 +242,7 @@
 }
 
 .card-title:hover {
-  color: #f5c518;
+  color: #d4af37;
 }
 
 .card-meta {
@@ -240,7 +264,7 @@
 
 .link-small {
   font-size: 0.8rem;
-  color: #f5c518;
+  color: #d4af37;
 }
 
 .pagination {
@@ -297,13 +321,14 @@
 }
 
 .create-form button {
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  background: #f5c518;
-  color: #000;
-  font-weight: 600;
-  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  font-weight: 500;
+  border: 1px solid rgba(212, 175, 55, 0.35);
   cursor: pointer;
+  letter-spacing: 0.02em;
 }
 
 .create-form button:disabled {
@@ -321,11 +346,11 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
   margin-bottom: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .list-name {
@@ -336,7 +361,7 @@
 }
 
 .list-name:hover {
-  color: #f5c518;
+  color: #d4af37;
 }
 
 .list-meta {
@@ -375,7 +400,7 @@
 }
 
 .breadcrumb a {
-  color: #f5c518;
+  color: #d4af37;
 }
 
 .breadcrumb span {
@@ -388,8 +413,9 @@
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background: rgba(245, 197, 24, 0.1);
-  border-radius: 8px;
+  background: rgba(212, 175, 55, 0.06);
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.12);
 }
 
 .badge {
@@ -433,20 +459,23 @@
 }
 
 .shared-form button {
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  background: #f5c518;
-  color: #000;
-  font-weight: 600;
-  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  font-weight: 500;
+  border: 1px solid rgba(212, 175, 55, 0.35);
   cursor: pointer;
+  letter-spacing: 0.02em;
 }
 
 /* Detail page */
 .detail-page .back {
   display: inline-block;
   margin-bottom: 1rem;
-  color: #f5c518;
+  color: #d4af37;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
 }
 
 .detail-hero {
@@ -467,8 +496,11 @@
 }
 
 .detail-page h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 2rem;
+  font-weight: 500;
   margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
 }
 
 .detail-date {

@@ -7,8 +7,10 @@ export function Layout() {
   return (
     <div className="layout">
       <header className="header">
-        <Link to="/" className="logo">Watch List</Link>
-        <nav>
+        <h1 className="logo-wrap">
+          <Link to="/" className="logo">Watch List</Link>
+        </h1>
+        <nav className="nav">
           <Link to="/" className={loc.pathname === '/' ? 'active' : ''}>Search</Link>
           <Link to="/watchlists" className={isActive('/watchlists') ? 'active' : ''}>My Watchlists</Link>
           <Link to="/shared" className={isActive('/shared') ? 'active' : ''}>Open shared list</Link>

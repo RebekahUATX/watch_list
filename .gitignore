@@ -3,3 +3,6 @@
 
 # Dependencies
 node_modules
+
+# User data (watchlists) - not part of development
+server/data

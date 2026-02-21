@@ -10,6 +10,7 @@ import {
   addToWatchlist,
   getMyWatchlists,
 } from '../api';
+import { parseDescription } from '../parseDescription';
 import { Link } from 'react-router-dom';
 
 const SORT_OPTIONS = [
@@ -56,10 +57,33 @@ export function Search() {
     setLoading(true);
     setError('');
     try {
-      if (query.trim()) {
-        const fn = type === 'movie' ? searchMovies : searchTv;
-        const data = await fn(query.trim(), page);
-        setResults({ ...data, results: data.results || [] });
+      const q = query.trim();
+      if (q) {
+        const parsed = parseDescription(q, type === 'movie');
+        if (parsed.hasFilters) {
+          const params = {
+            page,
+            sort_by: parsed.voteGte ? (type === 'movie' ? 'vote_average.desc' : 'vote_average.desc')
+              : type === 'tv' && filters.sort_by.includes('primary_release') ? 'first_air_date.desc' : filters.sort_by,
+            'vote_average.gte': parsed.voteGte ?? filters['vote_average.gte'] || undefined,
+          };
+          if (parsed.genreIds.length) params.with_genres = parsed.genreIds.join(',');
+          if (type === 'movie') {
+            if (parsed.yearGte) params['primary_release_date.gte'] = `${parsed.yearGte}-01-01`;
+            if (parsed.yearLte) params['primary_release_date.lte'] = `${parsed.yearLte}-12-31`;
+            const data = await discoverMovies(params);
+            setResults(data);
+          } else {
+            if (parsed.yearGte) params['first_air_date.gte'] = `${parsed.yearGte}-01-01`;
+            if (parsed.yearLte) params['first_air_date.lte'] = `${parsed.yearLte}-12-31`;
+            const data = await discoverTv(params);
+            setResults(data);
+          }
+        } else {
+          const fn = type === 'movie' ? searchMovies : searchTv;
+          const data = await fn(q, page);
+          setResults({ ...data, results: data.results || [] });
+        }
       } else {
         const params = {
           page,
@@ -123,7 +147,7 @@ export function Search() {
         <div className="form-row">
           <input
             type="text"
-            placeholder="Search by title (or leave blank to browse with filters)"
+            placeholder="Search by title or describe what you want (e.g. romantic comedy from the 90s)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="search-input"

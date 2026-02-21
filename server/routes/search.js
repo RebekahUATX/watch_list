@@ -85,6 +85,18 @@ searchRouter.get('/tv', async (req, res) => {
   }
 });
 
+// Search keywords (for description-based search)
+searchRouter.get('/keywords', async (req, res) => {
+  try {
+    const { q, page = 1 } = req.query;
+    if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
+    const data = await tmdb('/search/keyword', { query: q.trim(), page });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Text search movies
 searchRouter.get('/movies/query', async (req, res) => {
   try {

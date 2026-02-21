@@ -69,6 +69,13 @@ export async function searchTv(query, page = 1) {
   return res.json();
 }
 
+export async function searchKeywords(query) {
+  const res = await fetch(`${API}/search/keywords?q=${encodeURIComponent(query)}`);
+  if (!res.ok) return { results: [] };
+  const data = await res.json();
+  return data;
+}
+
 export async function getMyWatchlists() {
   const res = await fetch(`${API}/watchlists/mine`, { headers: headers() });
   if (!res.ok) throw new Error('Failed to load watchlists');

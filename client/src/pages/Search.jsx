@@ -7,6 +7,8 @@ import {
   discoverTv,
   searchMovies,
   searchTv,
+  searchKeywords,
+  searchPeople,
   addToWatchlist,
   getMyWatchlists,
 } from '../api';
@@ -68,6 +70,35 @@ export function Search() {
             'vote_average.gte': parsed.voteGte ?? (filters['vote_average.gte'] || undefined),
           };
           if (parsed.genreIds.length) params.with_genres = parsed.genreIds.join(',');
+          if (parsed.runtimeGte) params['with_runtime.gte'] = parsed.runtimeGte;
+          if (parsed.runtimeLte) params['with_runtime.lte'] = parsed.runtimeLte;
+          if (parsed.certification) {
+            params.certification = parsed.certification;
+            params.certification_country = parsed.certificationCountry || 'US';
+          }
+          if (parsed.originalLanguage) params.with_original_language = parsed.originalLanguage;
+          if (parsed.castName) {
+            try {
+              const people = await searchPeople(parsed.castName);
+              if (people.results?.[0]?.id) params.with_cast = people.results[0].id;
+            } catch (_) {}
+          }
+          if (parsed.crewName) {
+            try {
+              const people = await searchPeople(parsed.crewName);
+              if (people.results?.[0]?.id) params.with_crew = people.results[0].id;
+            } catch (_) {}
+          }
+          if (parsed.keywordTerms.length > 0) {
+            const keywordIds = [];
+            for (const term of parsed.keywordTerms.slice(0, 3)) {
+              try {
+                const kw = await searchKeywords(term);
+                if (kw.results?.[0]?.id) keywordIds.push(kw.results[0].id);
+              } catch (_) {}
+            }
+            if (keywordIds.length) params.with_keywords = keywordIds.join(',');
+          }
           if (type === 'movie') {
             if (parsed.yearGte) params['primary_release_date.gte'] = `${parsed.yearGte}-01-01`;
             if (parsed.yearLte) params['primary_release_date.lte'] = `${parsed.yearLte}-12-31`;

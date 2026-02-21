@@ -27,6 +27,12 @@ searchRouter.get('/movies', async (req, res) => {
       'vote_count.gte': voteCountGte,
       with_original_language,
       with_keywords,
+      with_cast,
+      with_crew,
+      'with_runtime.gte': runtimeGte,
+      'with_runtime.lte': runtimeLte,
+      certification,
+      certification_country = 'US',
     } = req.query;
     const query = {
       page,
@@ -41,6 +47,14 @@ searchRouter.get('/movies', async (req, res) => {
     if (voteCountGte) query['vote_count.gte'] = voteCountGte;
     if (with_original_language) query.with_original_language = with_original_language;
     if (with_keywords) query.with_keywords = with_keywords;
+    if (with_cast) query.with_cast = with_cast;
+    if (with_crew) query.with_crew = with_crew;
+    if (runtimeGte) query['with_runtime.gte'] = runtimeGte;
+    if (runtimeLte) query['with_runtime.lte'] = runtimeLte;
+    if (certification) {
+      query.certification_country = certification_country;
+      query.certification = certification;
+    }
 
     const data = await tmdb('/discover/movie', query);
     res.json(data);
@@ -63,6 +77,12 @@ searchRouter.get('/tv', async (req, res) => {
       'vote_count.gte': voteCountGte,
       with_original_language,
       with_status,
+      with_cast,
+      with_crew,
+      'with_runtime.gte': runtimeGte,
+      'with_runtime.lte': runtimeLte,
+      certification,
+      certification_country = 'US',
     } = req.query;
     const query = {
       page,
@@ -77,8 +97,28 @@ searchRouter.get('/tv', async (req, res) => {
     if (voteCountGte) query['vote_count.gte'] = voteCountGte;
     if (with_original_language) query.with_original_language = with_original_language;
     if (with_status) query.with_status = with_status;
+    if (with_cast) query.with_cast = with_cast;
+    if (with_crew) query.with_crew = with_crew;
+    if (runtimeGte) query['with_runtime.gte'] = runtimeGte;
+    if (runtimeLte) query['with_runtime.lte'] = runtimeLte;
+    if (certification) {
+      query.certification_country = certification_country;
+      query.certification = certification;
+    }
 
     const data = await tmdb('/discover/tv', query);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Search people (for cast/crew filters)
+searchRouter.get('/people', async (req, res) => {
+  try {
+    const { q, page = 1 } = req.query;
+    if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
+    const data = await tmdb('/search/person', { query: q.trim(), page });
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });

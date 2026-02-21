@@ -1,0 +1,24 @@
+{
+  "watchlists": [
+    {
+      "id": "AAvnkv3tVlC8gbdKsNUOq",
+      "name": "Family Movies",
+      "ownerId": "user_ooji0qzupf",
+      "shareCode": null,
+      "isShared": false,
+      "items": [
+        {
+          "tmdbId": 38757,
+          "type": "movie",
+          "title": "Tangled",
+          "posterPath": "/ym7Kst6a4uodryxqbGOxmewF235.jpg",
+          "releaseDate": "2010-11-24",
+          "voteAverage": 7.61,
+          "addedAt": "2026-02-21T19:34:18.209Z"
+        }
+      ],
+      "createdAt": "2026-02-21T19:34:00.261Z"
+    }
+  ],
+  "nextId": 1
+}

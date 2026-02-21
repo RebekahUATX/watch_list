@@ -14,47 +14,58 @@ const headers = () => ({
   'X-Owner-Id': getOwnerId(),
 });
 
+async function handleApiError(res) {
+  if (res.ok) return null;
+  let msg = 'Search failed';
+  try {
+    const data = await res.json();
+    if (data?.error?.includes('TMDB 401')) msg = 'Invalid API key. Check your TMDB key in .env and restart the server.';
+    else if (data?.error) msg = data.error;
+  } catch (_) {}
+  throw new Error(msg);
+}
+
 export async function getImageConfig() {
   const res = await fetch(`${API}/search/config`);
-  if (!res.ok) throw new Error('Failed to load config');
+  if (!res.ok) await handleApiError(res);
   return res.json();
 }
 
 export async function getMovieGenres() {
   const res = await fetch(`${API}/genres/movies`);
-  if (!res.ok) throw new Error('Failed to load genres');
+  if (!res.ok) await handleApiError(res);
   return res.json();
 }
 
 export async function getTvGenres() {
   const res = await fetch(`${API}/genres/tv`);
-  if (!res.ok) throw new Error('Failed to load genres');
+  if (!res.ok) await handleApiError(res);
   return res.json();
 }
 
 export async function discoverMovies(params) {
   const q = new URLSearchParams(params).toString();
   const res = await fetch(`${API}/search/movies?${q}`);
-  if (!res.ok) throw new Error('Search failed');
+  if (!res.ok) await handleApiError(res);
   return res.json();
 }
 
 export async function discoverTv(params) {
   const q = new URLSearchParams(params).toString();
   const res = await fetch(`${API}/search/tv?${q}`);
-  if (!res.ok) throw new Error('Search failed');
+  if (!res.ok) await handleApiError(res);
   return res.json();
 }
 
 export async function searchMovies(query, page = 1) {
   const res = await fetch(`${API}/search/movies/query?q=${encodeURIComponent(query)}&page=${page}`);
-  if (!res.ok) throw new Error('Search failed');
+  if (!res.ok) await handleApiError(res);
   return res.json();
 }
 
 export async function searchTv(query, page = 1) {
   const res = await fetch(`${API}/search/tv/query?q=${encodeURIComponent(query)}&page=${page}`);
-  if (!res.ok) throw new Error('Search failed');
+  if (!res.ok) await handleApiError(res);
   return res.json();
 }
 

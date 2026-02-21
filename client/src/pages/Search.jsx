@@ -65,7 +65,7 @@ export function Search() {
             page,
             sort_by: parsed.voteGte ? (type === 'movie' ? 'vote_average.desc' : 'vote_average.desc')
               : type === 'tv' && filters.sort_by.includes('primary_release') ? 'first_air_date.desc' : filters.sort_by,
-            'vote_average.gte': parsed.voteGte ?? filters['vote_average.gte'] || undefined,
+            'vote_average.gte': parsed.voteGte ?? (filters['vote_average.gte'] || undefined),
           };
           if (parsed.genreIds.length) params.with_genres = parsed.genreIds.join(',');
           if (type === 'movie') {

@@ -53,6 +53,10 @@ const KEYWORD_TERMS = [
   // Aesthetic
   'urban', 'dark comedy', 'dark humor', 'slice of life', 'slice-of-life', 'surreal', 'artistic',
   'minimalist', 'vintage', 'retro', 'epic', 'visually stunning',
+  // Holidays (keyword lookup for holiday-themed films)
+  'holiday', 'holiday movie', 'christmas', 'christmas movie', 'halloween', 'halloween movie',
+  'valentine\'s day', 'valentines day', 'valentines', 'valentine', 'new year', 'new year\'s',
+  'thanksgiving', 'easter',
 ];
 
 // Runtime: term -> { gte, lte } in minutes

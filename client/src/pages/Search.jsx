@@ -15,6 +15,13 @@ import {
 import { parseDescription } from '../parseDescription';
 import { Link } from 'react-router-dom';
 
+// Use more specific TMDB keyword lookups for better relevance (e.g. "christmas movie" over "christmas")
+const KEYWORD_LOOKUP_OVERRIDES = {
+  christmas: 'christmas movie',
+  halloween: 'halloween movie',
+  holiday: 'holiday movie',
+};
+
 const SORT_OPTIONS = [
   { value: 'popularity.desc', label: 'Popularity (high first)' },
   { value: 'popularity.asc', label: 'Popularity (low first)' },
@@ -94,7 +101,8 @@ export function Search() {
             const keywordIds = [];
             for (const term of parsed.keywordTerms.slice(0, 3)) {
               try {
-                const kw = await searchKeywords(term);
+                const lookupTerm = KEYWORD_LOOKUP_OVERRIDES[term] ?? term;
+                const kw = await searchKeywords(lookupTerm);
                 if (kw.results?.[0]?.id) keywordIds.push(kw.results[0].id);
               } catch (_) {}
             }

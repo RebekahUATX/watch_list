@@ -26,10 +26,10 @@ const GENRE_TERMS = [
 ];
 
 const DECADES = [
-  { pattern: /\b(90s|nineties|'90s)\b/i, gte: 1990, lte: 1999 },
-  { pattern: /\b(80s|eighties|'80s)\b/i, gte: 1980, lte: 1989 },
-  { pattern: /\b(70s|seventies|'70s)\b/i, gte: 1970, lte: 1979 },
-  { pattern: /\b(60s|sixties|'60s)\b/i, gte: 1960, lte: 1969 },
+  { pattern: /\b(90'?s|nineties|'90s)\b/i, gte: 1990, lte: 1999 },
+  { pattern: /\b(80'?s|eighties|'80s)\b/i, gte: 1980, lte: 1989 },
+  { pattern: /\b(70'?s|seventies|'70s)\b/i, gte: 1970, lte: 1979 },
+  { pattern: /\b(60'?s|sixties|'60s)\b/i, gte: 1960, lte: 1969 },
   { pattern: /\b(2000s|naughties)\b/i, gte: 2000, lte: 2009 },
   { pattern: /\b(2010s|tens)\b/i, gte: 2010, lte: 2019 },
   { pattern: /\b(2020s|twenties)\b/i, gte: 2020, lte: 2029 },

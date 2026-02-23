@@ -3,10 +3,10 @@
  * Supports: genre terms, keyword terms, decades, years, runtime, certification, language.
  */
 const GENRE_TERMS = [
-  { terms: ['romantic', 'romance', 'love story'], movieId: 10749, tvId: 10749 },
-  { terms: ['comedy', 'comedies', 'funny'], movieId: 35, tvId: 35 },
+  { terms: ['romantic', 'romance', 'rom com', 'romcom', 'love story'], movieId: 10749, tvId: 10749 },
+  { terms: ['comedy', 'comedies', 'funny', 'comedic'], movieId: 35, tvId: 35 },
   { terms: ['sci-fi', 'scifi', 'science fiction'], movieId: 878, tvId: 10765 },
-  { terms: ['horror', 'scary'], movieId: 27, tvId: 27 },
+  { terms: ['horror', 'scary', 'scary movie', 'horror movie'], movieId: 27, tvId: 27 },
   { terms: ['thriller', 'thrillers'], movieId: 53, tvId: 53 },
   { terms: ['action'], movieId: 28, tvId: 10759 },
   { terms: ['drama', 'dramas'], movieId: 18, tvId: 18 },
@@ -104,9 +104,16 @@ export function parseDescription(query, isMovie = true) {
     crewName: null,
   };
 
+  // Helper: match term as whole word or phrase (order-independent)
+  const matchesTerm = (term) => {
+    if (term.includes(' ')) return q.includes(term);
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('\\b' + escaped + '\\b', 'i').test(q);
+  };
+
   // Extract genres (dedupe when multiple term groups map to same genre)
   for (const { terms, movieId, tvId } of GENRE_TERMS) {
-    if (terms.some((t) => q.includes(t))) {
+    if (terms.some(matchesTerm)) {
       const id = isMovie ? movieId : tvId;
       if (!result.genreIds.includes(id)) result.genreIds.push(id);
     }
@@ -114,12 +121,12 @@ export function parseDescription(query, isMovie = true) {
 
   // Extract keyword terms (for TMDB keyword lookup)
   for (const term of KEYWORD_TERMS) {
-    if (q.includes(term)) result.keywordTerms.push(term);
+    if (matchesTerm(term)) result.keywordTerms.push(term);
   }
 
   // Runtime
   for (const { terms, gte, lte } of RUNTIME_MAP) {
-    if (terms.some((t) => q.includes(t))) {
+    if (terms.some(matchesTerm)) {
       if (gte) result.runtimeGte = gte;
       if (lte) result.runtimeLte = lte;
       break;
@@ -128,7 +135,7 @@ export function parseDescription(query, isMovie = true) {
 
   // Certification
   for (const { terms, cert } of CERTIFICATION_MAP) {
-    if (terms.some((t) => q.includes(t))) {
+    if (terms.some(matchesTerm)) {
       result.certification = cert;
       break;
     }
@@ -136,7 +143,7 @@ export function parseDescription(query, isMovie = true) {
 
   // Language
   for (const { terms, lang } of LANGUAGE_MAP) {
-    if (terms.some((t) => q.includes(t))) {
+    if (terms.some(matchesTerm)) {
       result.originalLanguage = lang;
       break;
     }

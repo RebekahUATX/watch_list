@@ -65,10 +65,11 @@ export function Search() {
         if (parsed.hasFilters) {
           const params = {
             page,
-            sort_by: parsed.voteGte ? (type === 'movie' ? 'vote_average.desc' : 'vote_average.desc')
+            sort_by: parsed.voteGte ? 'vote_average.desc'
               : type === 'tv' && filters.sort_by.includes('primary_release') ? 'first_air_date.desc' : filters.sort_by,
-            'vote_average.gte': parsed.voteGte ?? (filters['vote_average.gte'] || undefined),
           };
+          const voteGte = parsed.voteGte ?? filters['vote_average.gte'];
+          if (voteGte) params['vote_average.gte'] = voteGte;
           if (parsed.genreIds.length) params.with_genres = parsed.genreIds.join(',');
           if (parsed.runtimeGte) params['with_runtime.gte'] = parsed.runtimeGte;
           if (parsed.runtimeLte) params['with_runtime.lte'] = parsed.runtimeLte;

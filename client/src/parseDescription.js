@@ -23,20 +23,6 @@ const GENRE_TERMS = [
   { terms: ['courtroom', 'court room', 'court room drama', 'legal drama'], movieId: 18, tvId: 18 },
   { terms: ['musical', 'musicals', 'music'], movieId: 10402, tvId: 10402 },
   { terms: ['adaptation', 'adaptations', 'adapted from', 'book to film'], movieId: 18, tvId: 18 },
-  // Mood descriptors
-  { terms: ['light-hearted', 'lighthearted', 'charming', 'whimsical', 'feel-good', 'feel good'], movieId: 35, tvId: 35 },
-  { terms: ['melancholic', 'intense', 'nostalgic', 'inspirational', 'hopeful', 'dramatic', 'pensive', 'heartfelt', 'thought-provoking', 'thought provoking', 'grounded', 'character-driven', 'character driven'], movieId: 18, tvId: 18 },
-  { terms: ['thrilling', 'edgy', 'dark', 'plot twist', 'clever', 'mind-bending', 'mind bending'], movieId: 53, tvId: 53 },
-  { terms: ['heartwarming', 'cult classic'], movieId: 10751, tvId: 10751 },
-  { terms: ['fast-paced', 'fast paced'], movieId: 28, tvId: 10759 },
-  // Aesthetic descriptors
-  { terms: ['noir', 'film noir', 'urban'], movieId: 80, tvId: 80 },
-  { terms: ['dark comedy', 'dark humor'], movieId: 35, tvId: 35 },
-  { terms: ['slice of life', 'slice-of-life'], movieId: 18, tvId: 18 },
-  { terms: ['post-apocalyptic', 'post apocalyptic', 'cyberpunk'], movieId: 878, tvId: 10765 },
-  { terms: ['surreal', 'artistic', 'minimalist', 'graphic novel style', 'visually stunning', 'cinematically rich', 'fantasy realism'], movieId: 14, tvId: 10765 },
-  { terms: ['vintage', 'retro'], movieId: 36, tvId: 18 },
-  { terms: ['epic'], movieId: 12, tvId: 10759 },
 ];
 
 const DECADES = [
@@ -49,14 +35,24 @@ const DECADES = [
   { pattern: /\b(2020s|twenties)\b/i, gte: 2020, lte: 2029 },
 ];
 
-const RATING_TERMS = /\b(good rating|high rated|well rated|high rating|highly rated|top rated|acclaimed|critically acclaimed|award winning|best|top)\b/i;
+const RATING_TERMS = /\b(good rating|high rated|well rated|high rating|highly rated|top rated|acclaimed|critically acclaimed|award winning|best|top|7\+|8\+|9\+|above 7|above 8|minimum rating)\b/i;
 
-// Terms to look up as TMDB keywords (adds nuance beyond genres)
+// Terms to look up as TMDB keywords (adds nuance beyond genres; respects specific descriptors)
 const KEYWORD_TERMS = [
+  // Structural / plot
   'courtroom', 'heist', 'noir', 'film noir', 'cyberpunk', 'time travel', 'zombie', 'vampire',
   'superhero', 'based on novel', 'female director', 'female protagonist', 'twist ending',
   'post-apocalyptic', 'dystopia', 'romantic comedy', 'buddy', 'road movie', 'revenge',
   'psychological thriller', 'coming of age', 'found family',
+  // Mood / tone (keyword lookup instead of genre collapse)
+  'light-hearted', 'lighthearted', 'charming', 'whimsical', 'feel good', 'feel-good', 'uplifting', 'cozy',
+  'melancholic', 'melancholy', 'intense', 'nostalgic', 'inspirational', 'hopeful', 'heartfelt',
+  'thought provoking', 'grounded', 'character driven', 'emotional', 'heartwarming', 'cult classic', 'dark',
+  // Style / pace
+  'thrilling', 'edgy', 'plot twist', 'clever', 'mind bending', 'mind-bending', 'fast-paced', 'fast paced',
+  // Aesthetic
+  'urban', 'dark comedy', 'dark humor', 'slice of life', 'slice-of-life', 'surreal', 'artistic',
+  'minimalist', 'vintage', 'retro', 'epic', 'visually stunning',
 ];
 
 // Runtime: term -> { gte, lte } in minutes
@@ -69,11 +65,11 @@ const RUNTIME_MAP = [
 
 // Certification (US)
 const CERTIFICATION_MAP = [
-  { terms: ['family friendly', 'family-friendly', 'kid friendly', 'kids'], cert: 'G' },
-  { terms: ['pg', 'suitable for kids'], cert: 'PG' },
-  { terms: ['pg-13', 'pg13'], cert: 'PG-13' },
-  { terms: ['r rated', 'r-rated', 'adult', 'mature'], cert: 'R' },
-  { terms: ['nc-17'], cert: 'NC-17' },
+  { terms: ['family friendly', 'family-friendly', 'kid friendly', 'kids', 'g rated', 'g-rated'], cert: 'G' },
+  { terms: ['pg', 'pg rated', 'suitable for kids'], cert: 'PG' },
+  { terms: ['pg-13', 'pg13', 'pg 13'], cert: 'PG-13' },
+  { terms: ['r rated', 'r-rated', 'r rated movie', 'adult', 'mature'], cert: 'R' },
+  { terms: ['nc-17', 'nc17'], cert: 'NC-17' },
 ];
 
 // Language (ISO 639-1)
@@ -159,7 +155,7 @@ export function parseDescription(query, isMovie = true) {
   }
 
   // Extract specific year (e.g. 1995, 2020)
-  if (!result.yearGte) {
+  if (!result.yearGte && !result.yearLte) {
     const yearMatch = q.match(/\b(19[5-9]\d|20[0-2]\d)\b/);
     if (yearMatch) {
       const y = parseInt(yearMatch[1], 10);
@@ -168,24 +164,36 @@ export function parseDescription(query, isMovie = true) {
     }
   }
 
-  // "from 2015" / "after 2010"
-  const fromMatch = q.match(/\b(?:from|after|since)\s+(\d{4})\b/i);
-  if (fromMatch) result.yearGte = parseInt(fromMatch[1], 10);
+  // "from 2015" / "after 2010" / "released in 2020" / "released 2020"
+  const fromMatch = q.match(/\b(?:from|after|since)\s+(?:the\s+)?(\d{4})\b/i);
+  if (fromMatch && !result.yearGte) result.yearGte = parseInt(fromMatch[1], 10);
+
+  const releasedMatch = q.match(/\breleased\s+(?:in\s+)?(\d{4})\b/i) || q.match(/\b(\d{4})\s*(?:release|movie|film|movies)\b/i);
+  if (releasedMatch && !result.yearGte) {
+    const y = parseInt(releasedMatch[1], 10);
+    result.yearGte = y;
+    result.yearLte = y;
+  }
 
   // "before 2000"
   const beforeMatch = q.match(/\bbefore\s+(\d{4})\b/i);
   if (beforeMatch) result.yearLte = parseInt(beforeMatch[1], 10) - 1;
 
-  // Rating hint
-  if (RATING_TERMS.test(q)) result.voteGte = 7;
+  // Rating hint - explicit numbers: "rated 8", "8 stars", "8+", "minimum 7.5"
+  const ratedNumMatch = q.match(/\b(?:rated|rating|stars?|minimum|min)\s*(\d(?:\.\d)?)\b|\b(\d(?:\.\d)?)\s*stars?\b|\b(\d(?:\.\d)?)\+\s*(?:rating|stars?)?\b/i);
+  if (ratedNumMatch) {
+    const num = parseFloat(ratedNumMatch[1] || ratedNumMatch[2] || ratedNumMatch[3] || 0);
+    if (num > 0) result.voteGte = num;
+  } else if (RATING_TERMS.test(q)) result.voteGte = result.voteGte ?? 7;
 
-  // Cast: "with Tom Hanks", "starring Meryl Streep"
-  const castMatch = q.match(/\b(?:with|starring|featuring)\s+([a-z\s.']+?)(?:\s+from|\s+in|$|,)/i);
-  if (castMatch) result.castName = castMatch[1].trim();
+  // Cast: "with Tom Hanks", "starring Meryl Streep", "featuring X", "actor X" (name must start with letter)
+  const castMatch = q.match(/\b(?:with|starring|featuring|actor)\s+([a-z][a-z0-9\s.'-]*?)(?:\s+from|\s+in|\s+and|\s*$|,|\.)/i);
+  if (castMatch) result.castName = castMatch[1].trim().replace(/\s+/g, ' ');
 
-  // Crew: "directed by Nolan", "directed by Christopher Nolan"
-  const directorMatch = q.match(/\bdirected\s+by\s+([a-z\s.']+?)(?:\s+from|\s+in|$|,)/i);
-  if (directorMatch) result.crewName = directorMatch[1].trim();
+  // Crew: "directed by Nolan", "director Nolan", "by Christopher Nolan" (name must start with letter to avoid "by 2020")
+  let directorMatch = q.match(/\b(?:directed\s+by|director)\s+([a-z][a-z0-9\s.'-]*?)(?:\s+from|\s+in|\s+and|\s*$|,|\.)/i);
+  if (!directorMatch) directorMatch = q.match(/\bby\s+([a-z][a-z0-9\s.'-]+?)\s*$/i);
+  if (directorMatch) result.crewName = directorMatch[1].trim().replace(/\s+/g, ' ');
 
   const hasFilters =
     result.genreIds.length > 0 ||

@@ -2,11 +2,13 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { nanoid } from 'nanoid';
+import { pgStore } from './store-postgres.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DB_PATH = join(__dirname, 'data', 'watchlists.json');
+const usePg = !!process.env.DATABASE_URL;
 
-function load() {
+function fileLoad() {
   try {
     if (existsSync(DB_PATH)) {
       return JSON.parse(readFileSync(DB_PATH, 'utf8'));
@@ -15,34 +17,39 @@ function load() {
   return { watchlists: [], nextId: 1 };
 }
 
-function save(data) {
+function fileSave(data) {
   const dataDir = join(__dirname, 'data');
   if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
   writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 }
 
-export function getAllWatchlists() {
-  return load().watchlists;
+export async function getAllWatchlists() {
+  if (usePg) return (await pgStore.load()).watchlists;
+  return fileLoad().watchlists;
 }
 
-export function getWatchlistById(id) {
-  const list = load().watchlists.find((w) => w.id === id);
+export async function getWatchlistById(id) {
+  if (usePg) return pgStore.getWatchlistById(id);
+  const list = fileLoad().watchlists.find((w) => w.id === id);
   return list || null;
 }
 
-export function getWatchlistByShareCode(shareCode) {
-  const list = load().watchlists.find(
+export async function getWatchlistByShareCode(shareCode) {
+  if (usePg) return pgStore.getWatchlistByShareCode(shareCode);
+  const list = fileLoad().watchlists.find(
     (w) => w.shareCode && w.shareCode.toLowerCase() === String(shareCode).toLowerCase()
   );
   return list || null;
 }
 
-export function getWatchlistsByOwner(ownerId) {
-  return load().watchlists.filter((w) => w.ownerId === ownerId);
+export async function getWatchlistsByOwner(ownerId) {
+  if (usePg) return pgStore.getWatchlistsByOwner(ownerId);
+  return fileLoad().watchlists.filter((w) => w.ownerId === ownerId);
 }
 
-export function createWatchlist({ name, ownerId, isShared = false }) {
-  const data = load();
+export async function createWatchlist({ name, ownerId, isShared = false }) {
+  if (usePg) return pgStore.createWatchlist({ name, ownerId, isShared });
+  const data = fileLoad();
   const shareCode = isShared ? nanoid(8) : null;
   const watchlist = {
     id: nanoid(),
@@ -54,31 +61,34 @@ export function createWatchlist({ name, ownerId, isShared = false }) {
     createdAt: new Date().toISOString(),
   };
   data.watchlists.push(watchlist);
-  save(data);
+  fileSave(data);
   return watchlist;
 }
 
-export function updateWatchlist(id, updates) {
-  const data = load();
+export async function updateWatchlist(id, updates) {
+  if (usePg) return pgStore.updateWatchlist(id, updates);
+  const data = fileLoad();
   const idx = data.watchlists.findIndex((w) => w.id === id);
   if (idx === -1) return null;
   const watchlist = { ...data.watchlists[idx], ...updates };
   data.watchlists[idx] = watchlist;
-  save(data);
+  fileSave(data);
   return watchlist;
 }
 
-export function deleteWatchlist(id) {
-  const data = load();
+export async function deleteWatchlist(id) {
+  if (usePg) return pgStore.deleteWatchlist(id);
+  const data = fileLoad();
   const idx = data.watchlists.findIndex((w) => w.id === id);
   if (idx === -1) return false;
   data.watchlists.splice(idx, 1);
-  save(data);
+  fileSave(data);
   return true;
 }
 
-export function addItemToList(listId, item) {
-  const data = load();
+export async function addItemToList(listId, item) {
+  if (usePg) return pgStore.addItemToList(listId, item);
+  const data = fileLoad();
   const w = data.watchlists.find((x) => x.id === listId);
   if (!w) return null;
   const key = `${item.type}-${item.tmdbId}`;
@@ -93,26 +103,28 @@ export function addItemToList(listId, item) {
     addedAt: new Date().toISOString(),
     watched: false,
   });
-  save(data);
+  fileSave(data);
   return w;
 }
 
-export function removeItemFromList(listId, type, tmdbId) {
-  const data = load();
+export async function removeItemFromList(listId, type, tmdbId) {
+  if (usePg) return pgStore.removeItemFromList(listId, type, tmdbId);
+  const data = fileLoad();
   const w = data.watchlists.find((x) => x.id === listId);
   if (!w) return null;
   w.items = w.items.filter((i) => !(i.type === type && i.tmdbId === Number(tmdbId)));
-  save(data);
+  fileSave(data);
   return w;
 }
 
-export function setItemWatched(listId, type, tmdbId, watched) {
-  const data = load();
+export async function setItemWatched(listId, type, tmdbId, watched) {
+  if (usePg) return pgStore.setItemWatched(listId, type, tmdbId, watched);
+  const data = fileLoad();
   const w = data.watchlists.find((x) => x.id === listId);
   if (!w) return null;
   const item = w.items.find((i) => i.type === type && i.tmdbId === Number(tmdbId));
   if (!item) return null;
   item.watched = !!watched;
-  save(data);
+  fileSave(data);
   return w;
 }

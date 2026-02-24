@@ -7,9 +7,14 @@ import { existsSync } from 'fs';
 import { searchRouter } from './routes/search.js';
 import { watchlistRouter } from './routes/watchlist.js';
 import { genresRouter } from './routes/genres.js';
+import { pgStore } from './store-postgres.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+if (process.env.DATABASE_URL) {
+  pgStore.init().catch((err) => console.error('Postgres init error:', err));
+}
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({ origin: true, credentials: true }));

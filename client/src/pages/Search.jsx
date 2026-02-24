@@ -307,7 +307,7 @@ export function Search() {
         <div className="form-row">
           <input
             type="text"
-            placeholder="Search by title or describe what you want (e.g. romantic comedy from the 90s)"
+            placeholder="What are you in the mood for?"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="search-input"

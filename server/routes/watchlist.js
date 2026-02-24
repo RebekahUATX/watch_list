@@ -9,60 +9,60 @@ function getOwnerId(req) {
 }
 
 // Get my watchlists (by owner id)
-watchlistRouter.get('/mine', (req, res) => {
+watchlistRouter.get('/mine', async (req, res) => {
   const ownerId = getOwnerId(req);
-  const lists = store.getWatchlistsByOwner(ownerId);
+  const lists = await store.getWatchlistsByOwner(ownerId);
   res.json(lists);
 });
 
-// Get single watchlist by id
-watchlistRouter.get('/:id', (req, res) => {
-  const list = store.getWatchlistById(req.params.id);
+// Get watchlist by share code (for shared links) - must be before /:id
+watchlistRouter.get('/shared/:shareCode', async (req, res) => {
+  const list = await store.getWatchlistByShareCode(req.params.shareCode);
   if (!list) return res.status(404).json({ error: 'Watchlist not found' });
   res.json(list);
 });
 
-// Get watchlist by share code (for shared links)
-watchlistRouter.get('/shared/:shareCode', (req, res) => {
-  const list = store.getWatchlistByShareCode(req.params.shareCode);
+// Get single watchlist by id
+watchlistRouter.get('/:id', async (req, res) => {
+  const list = await store.getWatchlistById(req.params.id);
   if (!list) return res.status(404).json({ error: 'Watchlist not found' });
   res.json(list);
 });
 
 // Create watchlist
-watchlistRouter.post('/', (req, res) => {
+watchlistRouter.post('/', async (req, res) => {
   const ownerId = getOwnerId(req);
   const { name, isShared } = req.body || {};
-  const list = store.createWatchlist({ name, ownerId, isShared: !!isShared });
+  const list = await store.createWatchlist({ name, ownerId, isShared: !!isShared });
   res.status(201).json(list);
 });
 
 // Update watchlist (name, isShared)
-watchlistRouter.patch('/:id', (req, res) => {
-  const list = store.updateWatchlist(req.params.id, req.body);
+watchlistRouter.patch('/:id', async (req, res) => {
+  const list = await store.updateWatchlist(req.params.id, req.body);
   if (!list) return res.status(404).json({ error: 'Watchlist not found' });
   res.json(list);
 });
 
 // Delete watchlist
-watchlistRouter.delete('/:id', (req, res) => {
-  const ok = store.deleteWatchlist(req.params.id);
+watchlistRouter.delete('/:id', async (req, res) => {
+  const ok = await store.deleteWatchlist(req.params.id);
   if (!ok) return res.status(404).json({ error: 'Watchlist not found' });
   res.status(204).send();
 });
 
 // Add item to watchlist
-watchlistRouter.post('/:id/items', (req, res) => {
-  const list = store.addItemToList(req.params.id, req.body);
+watchlistRouter.post('/:id/items', async (req, res) => {
+  const list = await store.addItemToList(req.params.id, req.body);
   if (!list) return res.status(404).json({ error: 'Watchlist not found' });
   res.status(201).json(list);
 });
 
 // Update item (e.g. mark as watched)
-watchlistRouter.patch('/:id/items/:type/:tmdbId', (req, res) => {
+watchlistRouter.patch('/:id/items/:type/:tmdbId', async (req, res) => {
   const { watched } = req.body || {};
   if (typeof watched !== 'boolean') return res.status(400).json({ error: 'watched (boolean) required' });
-  const list = store.setItemWatched(
+  const list = await store.setItemWatched(
     req.params.id,
     req.params.type,
     req.params.tmdbId,
@@ -73,8 +73,8 @@ watchlistRouter.patch('/:id/items/:type/:tmdbId', (req, res) => {
 });
 
 // Remove item from watchlist
-watchlistRouter.delete('/:id/items/:type/:tmdbId', (req, res) => {
-  const list = store.removeItemFromList(
+watchlistRouter.delete('/:id/items/:type/:tmdbId', async (req, res) => {
+  const list = await store.removeItemFromList(
     req.params.id,
     req.params.type,
     req.params.tmdbId

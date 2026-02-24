@@ -21,8 +21,10 @@ A personal movie and TV show watchlist app. Search for films and shows, create w
 - **Frontend:** React, Vite, React Router
 - **Backend:** Node.js, Express
 - **Data:** TMDB (The Movie Database) API
-- **Storage:** File-based JSON
+- **Storage:** File-based JSON (local) or PostgreSQL (when `DATABASE_URL` is set)
 - **Hosting:** Railway
+
+For production on Railway, add a PostgreSQL database and set `DATABASE_URL` so watchlists persist across deploys.
 
 ---
 

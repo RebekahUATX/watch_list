@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getImageConfig,
   getMovieGenres,
@@ -21,6 +21,9 @@ const KEYWORD_LOOKUP_OVERRIDES = {
   halloween: 'halloween movie',
   holiday: 'holiday movie',
 };
+
+// Minimum vote count to favor mainstream films (filters out very obscure titles)
+const VOTE_COUNT_MIN = 100;
 
 const SORT_OPTIONS = [
   { value: 'popularity.desc', label: 'Popularity (high first)' },
@@ -48,9 +51,11 @@ export function Search() {
   });
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [watchlists, setWatchlists] = useState([]);
   const [addingToList, setAddingToList] = useState(null);
+  const loadMoreRef = useRef(null);
 
   useEffect(() => {
     getImageConfig().then(setConfig).catch(() => setConfig({ images: { secure_base_url: '', poster_sizes: ['w342'] } }));
@@ -62,10 +67,31 @@ export function Search() {
   const genres = type === 'movie' ? movieGenres : tvGenres;
   const imgBase = config?.images?.secure_base_url || '';
 
-  const runSearch = async (page = 1) => {
-    setLoading(true);
+  const runSearch = useCallback(async (page = 1, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     setError('');
     try {
+      // Keyword merge path stores full list; load more just slices more
+      if (append) {
+        setResults((prev) => {
+          if (prev?._fullMerged) {
+            const nextPage = (prev.page ?? 1) + 1;
+            const pageSize = 20;
+            const total = prev._fullMerged.length;
+            return {
+              ...prev,
+              page: nextPage,
+              results: prev._fullMerged.slice(0, Math.min(nextPage * pageSize, total)),
+              total_pages: Math.ceil(total / pageSize),
+            };
+          }
+          return prev;
+        });
+        setLoadingMore(false);
+        return;
+      }
+
       const q = query.trim();
       if (q) {
         const parsed = parseDescription(q, type === 'movie');
@@ -74,6 +100,7 @@ export function Search() {
             page,
             sort_by: parsed.voteGte ? 'vote_average.desc'
               : type === 'tv' && filters.sort_by.includes('primary_release') ? 'first_air_date.desc' : filters.sort_by,
+            'vote_count.gte': VOTE_COUNT_MIN,
           };
           const voteGte = parsed.voteGte ?? filters['vote_average.gte'];
           if (voteGte) params['vote_average.gte'] = voteGte;
@@ -139,6 +166,7 @@ export function Search() {
                 const start = (page - 1) * pageSize;
                 setResults({
                   results: merged.slice(start, start + pageSize),
+                  _fullMerged: merged,
                   page,
                   total_pages: Math.max(1, Math.ceil(merged.length / pageSize)),
                   total_results: merged.length,
@@ -146,45 +174,72 @@ export function Search() {
               } else {
                 params.with_keywords = keywordIds.join(',');
                 const data = await runDiscover(params);
-                setResults(data);
+                if (append) {
+                  setResults((prev) => ({ ...data, results: [...(prev?.results || []), ...(data.results || [])], page: data.page }));
+                } else {
+                  setResults(data);
+                }
               }
             } else {
               const data = await runDiscover(params);
-              setResults(data);
+              if (append) {
+                setResults((prev) => ({ ...data, results: [...(prev?.results || []), ...(data.results || [])], page: data.page }));
+              } else {
+                setResults(data);
+              }
             }
           } else {
             const data = await runDiscover(params);
-            setResults(data);
+            if (append) {
+              setResults((prev) => ({ ...data, results: [...(prev?.results || []), ...(data.results || [])], page: data.page }));
+            } else {
+              setResults(data);
+            }
           }
         } else {
           const fn = type === 'movie' ? searchMovies : searchTv;
           const data = await fn(q, page);
-          setResults({ ...data, results: data.results || [] });
+          const normalized = { ...data, results: data.results || [] };
+          if (append) {
+            setResults((prev) => ({ ...normalized, results: [...(prev?.results || []), ...(normalized.results || [])], page: normalized.page }));
+          } else {
+            setResults(normalized);
+          }
         }
       } else {
         const params = {
           page,
           sort_by: type === 'tv' && filters.sort_by.includes('primary_release') ? 'first_air_date.desc' : filters.sort_by,
           'vote_average.gte': filters['vote_average.gte'] || undefined,
+          'vote_count.gte': VOTE_COUNT_MIN,
         };
         if (filters.with_genres) params.with_genres = filters.with_genres;
         if (type === 'movie') {
           if (filters.year) params.primary_release_year = filters.year;
           const data = await discoverMovies(params);
-          setResults(data);
+          if (append) {
+            setResults((prev) => ({ ...data, results: [...(prev?.results || []), ...(data.results || [])], page: data.page }));
+          } else {
+            setResults(data);
+          }
         } else {
           if (filters.year) params.first_air_date_year = filters.year;
           const data = await discoverTv(params);
-          setResults(data);
+          if (append) {
+            setResults((prev) => ({ ...data, results: [...(prev?.results || []), ...(data.results || [])], page: data.page }));
+          } else {
+            setResults(data);
+          }
         }
       }
     } catch (e) {
       setError(e.message || 'Search failed');
       setResults(null);
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
-  };
+  }, [query, type, filters]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -210,6 +265,21 @@ export function Search() {
   const items = results?.results || [];
   const totalPages = results?.total_pages || 0;
   const currentPage = results?.page || 1;
+  const hasMore = currentPage < totalPages && totalPages > 1;
+
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) runSearch(currentPage + 1, true);
+      },
+      { rootMargin: '200px', threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, loading, loadingMore, currentPage, runSearch]);
 
   return (
     <div className="search-page">
@@ -337,23 +407,8 @@ export function Search() {
               </div>
             ))}
           </div>
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button
-                disabled={currentPage <= 1}
-                onClick={() => runSearch(currentPage - 1)}
-              >
-                Previous
-              </button>
-              <span>Page {currentPage} of {totalPages}</span>
-              <button
-                disabled={currentPage >= totalPages}
-                onClick={() => runSearch(currentPage + 1)}
-              >
-                Next
-              </button>
-            </div>
-          )}
+          {hasMore && <div ref={loadMoreRef} className="load-more-sentinel" style={{ height: 1 }} aria-hidden />}
+          {loadingMore && <p className="loading-more">Loading more…</p>}
         </>
       )}
     </div>

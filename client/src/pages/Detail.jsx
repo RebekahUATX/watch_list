@@ -70,15 +70,6 @@ export function Detail() {
       <div className="detail-hero">
         <div className="detail-poster-wrap">
           {poster && <img src={poster} alt="" className="detail-poster" />}
-          {item.trailerKey && (
-            <button
-              type="button"
-              className="detail-trailer-btn"
-              onClick={() => setTrailerOpen(true)}
-            >
-              ▶ Watch trailer
-            </button>
-          )}
         </div>
         <div className="detail-meta">
           <h1>{title}</h1>
@@ -105,6 +96,15 @@ export function Detail() {
               </p>
             )}
           </div>
+          {item.trailerKey && (
+            <button
+              type="button"
+              className="detail-trailer-btn"
+              onClick={() => setTrailerOpen(true)}
+            >
+              ▶ Watch trailer
+            </button>
+          )}
           {watchlists.length > 0 && (
             <div className="detail-add-to-list">
               <select
@@ -133,6 +133,7 @@ export function Detail() {
             <button type="button" className="detail-trailer-close" onClick={() => setTrailerOpen(false)} aria-label="Close">×</button>
             <div className="detail-trailer-wrap">
               <iframe
+                style={{ border: 0, display: 'block' }}
                 title={`${title} trailer`}
                 src={`https://www.youtube.com/embed/${item.trailerKey}?autoplay=1`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

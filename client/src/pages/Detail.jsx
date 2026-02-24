@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
-import { getImageConfig } from '../api';
+import { getImageConfig, getMyWatchlists, addToWatchlist } from '../api';
 
 export function Detail() {
   const { type, id } = useParams();
@@ -8,9 +8,12 @@ export function Detail() {
   const [config, setConfig] = useState(null);
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [watchlists, setWatchlists] = useState([]);
+  const [addingToList, setAddingToList] = useState(null);
 
   useEffect(() => {
     getImageConfig().then(setConfig).catch(() => setConfig({ images: { secure_base_url: '' } }));
+    getMyWatchlists().then(setWatchlists).catch(() => setWatchlists([]));
   }, []);
 
   useEffect(() => {
@@ -36,6 +39,22 @@ export function Detail() {
   const vote = item.vote_average;
   const stars5 = vote != null ? (vote / 2).toFixed(1) : null;
   const filledStars = vote != null ? Math.round((vote / 10) * 5) : 0;
+
+  const addToList = async (listId) => {
+    setAddingToList(listId);
+    try {
+      await addToWatchlist(listId, {
+        tmdbId: item.id,
+        type: item.title ? 'movie' : 'tv',
+        title: item.title || item.name,
+        posterPath: item.poster_path,
+        releaseDate: item.release_date || item.first_air_date,
+        voteAverage: item.vote_average,
+      });
+      setWatchlists(await getMyWatchlists());
+    } catch (_) {}
+    setAddingToList(null);
+  };
 
   return (
     <div className="detail-page">
@@ -67,8 +86,41 @@ export function Detail() {
               </p>
             )}
           </div>
+          {watchlists.length > 0 && (
+            <div className="detail-add-to-list">
+              <select
+                onChange={(e) => {
+                  const listId = e.target.value;
+                  if (listId) addToList(listId);
+                  e.target.value = '';
+                }}
+                disabled={!!addingToList}
+              >
+                <option value="">Add to watchlist…</option>
+                {watchlists.map((w) => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {watchlists.length === 0 && (
+            <Link to="/watchlists" className="detail-create-list">Create a watchlist to save</Link>
+          )}
         </div>
       </div>
+      {item.trailerKey && (
+        <div className="detail-trailer">
+          <h3>Trailer</h3>
+          <div className="detail-trailer-wrap">
+            <iframe
+              title={`${title} trailer`}
+              src={`https://www.youtube.com/embed/${item.trailerKey}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

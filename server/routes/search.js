@@ -171,19 +171,20 @@ searchRouter.get('/config', async (req, res) => {
   }
 });
 
-// Get movie or TV detail by id (includes credits and content rating)
+// Get movie or TV detail by id (includes credits, content rating, videos)
 searchRouter.get('/detail/:type/:id', async (req, res) => {
   try {
     const { type, id } = req.params;
     if (type !== 'movie' && type !== 'tv') return res.status(400).json({ error: 'Invalid type' });
     const basePath = type === 'movie' ? `/movie/${id}` : `/tv/${id}`;
 
-    const [detail, credits, extra] = await Promise.all([
+    const [detail, credits, extra, videosRes] = await Promise.all([
       tmdb(basePath, { language: 'en-US' }),
       tmdb(`${basePath}/credits`, { language: 'en-US' }),
       type === 'movie'
         ? tmdb(`${basePath}/release_dates`, {})
         : tmdb(`${basePath}/content_ratings`, {}),
+      tmdb(`${basePath}/videos`, { language: 'en-US' }),
     ]);
 
     if (detail.success === false) return res.json(detail);
@@ -202,7 +203,12 @@ searchRouter.get('/detail/:type/:id', async (req, res) => {
       if (us?.rating) certification = us.rating;
     }
 
-    res.json({ ...detail, cast, director, certification });
+    const trailer = (videosRes.results || []).find(
+      (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+    );
+    const trailerKey = trailer?.key || null;
+
+    res.json({ ...detail, cast, director, certification, trailerKey });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

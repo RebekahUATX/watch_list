@@ -10,11 +10,19 @@ export function Detail() {
   const [loading, setLoading] = useState(true);
   const [watchlists, setWatchlists] = useState([]);
   const [addingToList, setAddingToList] = useState(null);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   useEffect(() => {
     getImageConfig().then(setConfig).catch(() => setConfig({ images: { secure_base_url: '' } }));
     getMyWatchlists().then(setWatchlists).catch(() => setWatchlists([]));
   }, []);
+
+  useEffect(() => {
+    if (!trailerOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setTrailerOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [trailerOpen]);
 
   useEffect(() => {
     if (!type || !id) return;
@@ -60,7 +68,18 @@ export function Detail() {
     <div className="detail-page">
       <Link to="/" state={{ searchState: location.state?.searchState }} className="back">← Back to search</Link>
       <div className="detail-hero">
-        {poster && <img src={poster} alt="" className="detail-poster" />}
+        <div className="detail-poster-wrap">
+          {poster && <img src={poster} alt="" className="detail-poster" />}
+          {item.trailerKey && (
+            <button
+              type="button"
+              className="detail-trailer-btn"
+              onClick={() => setTrailerOpen(true)}
+            >
+              ▶ Watch trailer
+            </button>
+          )}
+        </div>
         <div className="detail-meta">
           <h1>{title}</h1>
           <p className="detail-date">
@@ -108,16 +127,18 @@ export function Detail() {
           )}
         </div>
       </div>
-      {item.trailerKey && (
-        <div className="detail-trailer">
-          <h3>Trailer</h3>
-          <div className="detail-trailer-wrap">
-            <iframe
-              title={`${title} trailer`}
-              src={`https://www.youtube.com/embed/${item.trailerKey}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+      {item.trailerKey && trailerOpen && (
+        <div className="detail-trailer-overlay" onClick={() => setTrailerOpen(false)} role="button" tabIndex={0} aria-label="Close trailer">
+          <div className="detail-trailer-modal" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="detail-trailer-close" onClick={() => setTrailerOpen(false)} aria-label="Close">×</button>
+            <div className="detail-trailer-wrap">
+              <iframe
+                title={`${title} trailer`}
+                src={`https://www.youtube.com/embed/${item.trailerKey}?autoplay=1`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           </div>
         </div>
       )}

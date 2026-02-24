@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { getImageConfig } from '../api';
 
 export function Detail() {
   const { type, id } = useParams();
+  const location = useLocation();
   const [config, setConfig] = useState(null);
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,7 @@ export function Detail() {
 
   return (
     <div className="detail-page">
-      <Link to="/" className="back">← Back to search</Link>
+      <Link to="/" state={{ searchState: location.state?.searchState }} className="back">← Back to search</Link>
       <div className="detail-hero">
         {poster && <img src={poster} alt="" className="detail-poster" />}
         <div className="detail-meta">

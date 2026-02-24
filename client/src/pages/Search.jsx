@@ -13,7 +13,7 @@ import {
   getMyWatchlists,
 } from '../api';
 import { parseDescription } from '../parseDescription';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 // Use more specific TMDB keyword lookups for better relevance (e.g. "christmas movie" over "christmas")
 const KEYWORD_LOOKUP_OVERRIDES = {
@@ -37,6 +37,7 @@ const SORT_OPTIONS = [
 ];
 
 export function Search() {
+  const location = useLocation();
   const [type, setType] = useState('movie');
   const [config, setConfig] = useState(null);
   const [movieGenres, setMovieGenres] = useState([]);
@@ -63,6 +64,17 @@ export function Search() {
     getTvGenres().then((d) => setTvGenres(d.genres || [])).catch(() => {});
     getMyWatchlists().then(setWatchlists).catch(() => setWatchlists([]));
   }, []);
+
+  // Restore search state when returning from detail page
+  useEffect(() => {
+    const saved = location.state?.searchState;
+    if (saved) {
+      if (saved.query != null) setQuery(saved.query);
+      if (saved.results != null) setResults(saved.results);
+      if (saved.filters != null) setFilters(saved.filters);
+      if (saved.type != null) setType(saved.type);
+    }
+  }, [location.state]);
 
   const genres = type === 'movie' ? movieGenres : tvGenres;
   const imgBase = config?.images?.secure_base_url || '';
@@ -369,7 +381,11 @@ export function Search() {
           <div className="results-grid">
             {items.map((item) => (
               <div key={`${type}-${item.id}`} className="result-card">
-                <Link to={`/detail/${type}/${item.id}`} className="poster-wrap">
+                <Link
+                  to={`/detail/${type}/${item.id}`}
+                  state={{ searchState: { query, results, filters, type } }}
+                  className="poster-wrap"
+                >
                   {item.poster_path ? (
                     <img src={`${imgBase}w342${item.poster_path}`} alt="" />
                   ) : (
@@ -377,7 +393,11 @@ export function Search() {
                   )}
                 </Link>
                 <div className="card-info">
-                  <Link to={`/detail/${type}/${item.id}`} className="card-title">
+                  <Link
+                    to={`/detail/${type}/${item.id}`}
+                    state={{ searchState: { query, results, filters, type } }}
+                    className="card-title"
+                  >
                     {item.title || item.name}
                   </Link>
                   <p className="card-meta">

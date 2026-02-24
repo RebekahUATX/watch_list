@@ -282,12 +282,13 @@ export function Search() {
   useEffect(() => {
     if (!hasMore || loading || loadingMore) return;
     const el = loadMoreRef.current;
-    if (!el) return;
+    const root = document.querySelector('main.main');
+    if (!el || !root) return;
     const obs = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) runSearch(currentPage + 1, true);
       },
-      { rootMargin: '400px', threshold: 0 }
+      { root, rootMargin: '200px', threshold: 0 }
     );
     obs.observe(el);
     return () => obs.disconnect();

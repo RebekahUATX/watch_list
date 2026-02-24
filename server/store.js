@@ -91,6 +91,7 @@ export function addItemToList(listId, item) {
     releaseDate: item.releaseDate || null,
     voteAverage: item.voteAverage != null ? item.voteAverage : null,
     addedAt: new Date().toISOString(),
+    watched: false,
   });
   save(data);
   return w;
@@ -101,6 +102,17 @@ export function removeItemFromList(listId, type, tmdbId) {
   const w = data.watchlists.find((x) => x.id === listId);
   if (!w) return null;
   w.items = w.items.filter((i) => !(i.type === type && i.tmdbId === Number(tmdbId)));
+  save(data);
+  return w;
+}
+
+export function setItemWatched(listId, type, tmdbId, watched) {
+  const data = load();
+  const w = data.watchlists.find((x) => x.id === listId);
+  if (!w) return null;
+  const item = w.items.find((i) => i.type === type && i.tmdbId === Number(tmdbId));
+  if (!item) return null;
+  item.watched = !!watched;
   save(data);
   return w;
 }

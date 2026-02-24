@@ -403,6 +403,14 @@ export function Search() {
                   </Link>
                   <p className="card-meta">
                     {(item.release_date || item.first_air_date)?.slice(0, 4)} · ★ {item.vote_average?.toFixed(1) || '—'}
+                    {watchlists.some((w) => w.items?.some((i) => i.type === type && i.tmdbId === item.id)) && (
+                      <span className="card-badges" title="In watchlist">
+                        {' '}<span className="badge-star" aria-label="In watchlist">★</span>
+                        {watchlists.some((w) => w.items?.some((i) => i.type === type && i.tmdbId === item.id && i.watched)) && (
+                          <span className="badge-watched" aria-label="Watched"> ✓</span>
+                        )}
+                      </span>
+                    )}
                   </p>
                   {watchlists.length > 0 && (
                     <div className="add-to-list">

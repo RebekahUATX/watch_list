@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getWatchlist, getImageConfig, removeFromWatchlist } from '../api';
+import { getWatchlist, getImageConfig, removeFromWatchlist, setWatchlistItemWatched } from '../api';
 
 export function WatchlistDetail() {
   const { id } = useParams();
@@ -26,6 +26,13 @@ export function WatchlistDetail() {
   const remove = async (type, tmdbId) => {
     try {
       await removeFromWatchlist(id, type, tmdbId);
+      setList(await getWatchlist(id));
+    } catch (_) {}
+  };
+
+  const toggleWatched = async (type, tmdbId, current) => {
+    try {
+      await setWatchlistItemWatched(id, type, tmdbId, !current);
       setList(await getWatchlist(id));
     } catch (_) {}
   };
@@ -64,6 +71,14 @@ export function WatchlistDetail() {
               <p className="card-meta">
                 {item.releaseDate?.slice(0, 4)} · ★ {item.voteAverage != null ? item.voteAverage.toFixed(1) : '—'}
               </p>
+              <button
+                type="button"
+                className={`btn-watched ${item.watched ? 'watched' : ''}`}
+                onClick={() => toggleWatched(item.type, item.tmdbId, item.watched)}
+                title={item.watched ? 'Mark as unwatched' : 'Mark as watched'}
+              >
+                {item.watched ? '✓ Watched' : 'Mark as watched'}
+              </button>
               <button type="button" className="btn-remove" onClick={() => remove(item.type, item.tmdbId)}>
                 Remove from list
               </button>

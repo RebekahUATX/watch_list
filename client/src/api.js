@@ -145,4 +145,14 @@ export async function removeFromWatchlist(listId, type, tmdbId) {
   return res.json();
 }
 
+export async function setWatchlistItemWatched(listId, type, tmdbId, watched) {
+  const res = await fetch(`${API}/watchlists/${listId}/items/${type}/${tmdbId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...headers() },
+    body: JSON.stringify({ watched }),
+  });
+  if (!res.ok) throw new Error('Failed to update');
+  return res.json();
+}
+
 export { getOwnerId };

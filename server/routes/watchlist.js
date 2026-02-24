@@ -58,6 +58,20 @@ watchlistRouter.post('/:id/items', (req, res) => {
   res.status(201).json(list);
 });
 
+// Update item (e.g. mark as watched)
+watchlistRouter.patch('/:id/items/:type/:tmdbId', (req, res) => {
+  const { watched } = req.body || {};
+  if (typeof watched !== 'boolean') return res.status(400).json({ error: 'watched (boolean) required' });
+  const list = store.setItemWatched(
+    req.params.id,
+    req.params.type,
+    req.params.tmdbId,
+    watched
+  );
+  if (!list) return res.status(404).json({ error: 'Watchlist not found' });
+  res.json(list);
+});
+
 // Remove item from watchlist
 watchlistRouter.delete('/:id/items/:type/:tmdbId', (req, res) => {
   const list = store.removeItemFromList(

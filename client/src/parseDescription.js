@@ -60,6 +60,18 @@ const KEYWORD_TERMS = [
   'thanksgiving', 'easter',
 ];
 
+// Sparse mood/style terms: when user matches one, expand to related keywords for OR-merge (broader results)
+const KEYWORD_RELATED_GROUPS = [
+  { terms: ['light-hearted', 'lighthearted', 'charming', 'whimsical', 'feel good', 'feel-good', 'uplifting', 'cozy', 'heartwarming'], lookups: ['light-hearted', 'feel good', 'heartwarming', 'uplifting', 'cozy', 'charming', 'whimsical'] },
+  { terms: ['melancholic', 'melancholy', 'nostalgic', 'heartfelt', 'pensive', 'emotional', 'thought provoking', 'thought-provoking'], lookups: ['melancholic', 'nostalgic', 'heartfelt', 'emotional'] },
+  { terms: ['intense', 'thrilling', 'edgy'], lookups: ['intense', 'thrilling', 'edgy'] },
+  { terms: ['slice of life', 'slice-of-life', 'grounded', 'character driven', 'character-driven'], lookups: ['slice of life', 'character driven'] },
+  { terms: ['surreal', 'artistic', 'minimalist', 'visually stunning'], lookups: ['surreal', 'artistic', 'visually stunning'] },
+  { terms: ['vintage', 'retro'], lookups: ['vintage', 'retro'] },
+  { terms: ['cult classic'], lookups: ['cult classic'] },
+  { terms: ['dark comedy', 'dark humor'], lookups: ['dark comedy', 'dark humor'] },
+];
+
 // Runtime: term -> { gte, lte } in minutes
 const RUNTIME_MAP = [
   { terms: ['short', 'under 90', 'under 90 minutes', 'quick watch'], lte: 90 },
@@ -120,9 +132,38 @@ export function parseDescription(query, isMovie = true) {
     }
   }
 
-  // Extract keyword terms (for TMDB keyword lookup)
+  // Structural terms (use AND; no expansion)
+  const STRUCTURAL_KEYWORDS = new Set([
+    'courtroom', 'heist', 'noir', 'film noir', 'cyberpunk', 'time travel', 'zombie', 'vampire',
+    'sports', 'sports movie', 'sport', 'superhero', 'based on novel', 'female director',
+    'female protagonist', 'twist ending', 'post-apocalyptic', 'dystopia', 'romantic comedy',
+    'buddy', 'road movie', 'revenge', 'psychological thriller', 'coming of age', 'found family',
+    'holiday', 'holiday movie', 'christmas', 'christmas movie', 'halloween', 'halloween movie',
+    'valentine\'s day', 'valentines day', 'valentines', 'valentine', 'new year', 'new year\'s',
+    'thanksgiving', 'easter',
+  ]);
+
+  // Extract keyword terms; expand sparse mood terms to related keywords (OR-merge)
+  let matchedRelatedGroup = null;
+  const structuralMatches = [];
   for (const term of KEYWORD_TERMS) {
-    if (matchesTerm(term)) result.keywordTerms.push(term);
+    if (!matchesTerm(term)) continue;
+    if (STRUCTURAL_KEYWORDS.has(term)) {
+      structuralMatches.push(term);
+    } else {
+      const group = KEYWORD_RELATED_GROUPS.find((g) => g.terms.includes(term));
+      if (group) matchedRelatedGroup = group;
+    }
+  }
+  if (structuralMatches.length > 0) {
+    result.keywordTerms = structuralMatches;
+  } else if (matchedRelatedGroup) {
+    result.keywordTerms = matchedRelatedGroup.lookups;
+    result.keywordTermsUseOr = true;
+  } else {
+    for (const term of KEYWORD_TERMS) {
+      if (matchesTerm(term) && !STRUCTURAL_KEYWORDS.has(term)) result.keywordTerms.push(term);
+    }
   }
 
   // Runtime

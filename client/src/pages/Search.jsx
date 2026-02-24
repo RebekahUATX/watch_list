@@ -97,26 +97,63 @@ export function Search() {
               if (people.results?.[0]?.id) params.with_crew = people.results[0].id;
             } catch (_) {}
           }
+          const runDiscover = async (discoverParams) => {
+            if (type === 'movie') {
+              if (parsed.yearGte) discoverParams['primary_release_date.gte'] = `${parsed.yearGte}-01-01`;
+              if (parsed.yearLte) discoverParams['primary_release_date.lte'] = `${parsed.yearLte}-12-31`;
+              return discoverMovies(discoverParams);
+            } else {
+              if (parsed.yearGte) discoverParams['first_air_date.gte'] = `${parsed.yearGte}-01-01`;
+              if (parsed.yearLte) discoverParams['first_air_date.lte'] = `${parsed.yearLte}-12-31`;
+              return discoverTv(discoverParams);
+            }
+          };
+
           if (parsed.keywordTerms.length > 0) {
             const keywordIds = [];
-            for (const term of parsed.keywordTerms.slice(0, 3)) {
+            const termsToLookUp = parsed.keywordTermsUseOr ? parsed.keywordTerms : parsed.keywordTerms.slice(0, 3);
+            for (const term of termsToLookUp) {
               try {
                 const lookupTerm = KEYWORD_LOOKUP_OVERRIDES[term] ?? term;
                 const kw = await searchKeywords(lookupTerm);
                 if (kw.results?.[0]?.id) keywordIds.push(kw.results[0].id);
               } catch (_) {}
             }
-            if (keywordIds.length) params.with_keywords = keywordIds.join(',');
-          }
-          if (type === 'movie') {
-            if (parsed.yearGte) params['primary_release_date.gte'] = `${parsed.yearGte}-01-01`;
-            if (parsed.yearLte) params['primary_release_date.lte'] = `${parsed.yearLte}-12-31`;
-            const data = await discoverMovies(params);
-            setResults(data);
+            if (keywordIds.length > 0) {
+              if (parsed.keywordTermsUseOr && keywordIds.length > 1) {
+                const responses = await Promise.all(
+                  keywordIds.map((id) => runDiscover({ ...params, with_keywords: String(id) }))
+                );
+                const seen = new Set();
+                const merged = [];
+                for (const res of responses) {
+                  for (const item of res.results || []) {
+                    if (!seen.has(item.id)) {
+                      seen.add(item.id);
+                      merged.push(item);
+                    }
+                  }
+                }
+                merged.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+                const pageSize = 20;
+                const start = (page - 1) * pageSize;
+                setResults({
+                  results: merged.slice(start, start + pageSize),
+                  page,
+                  total_pages: Math.max(1, Math.ceil(merged.length / pageSize)),
+                  total_results: merged.length,
+                });
+              } else {
+                params.with_keywords = keywordIds.join(',');
+                const data = await runDiscover(params);
+                setResults(data);
+              }
+            } else {
+              const data = await runDiscover(params);
+              setResults(data);
+            }
           } else {
-            if (parsed.yearGte) params['first_air_date.gte'] = `${parsed.yearGte}-01-01`;
-            if (parsed.yearLte) params['first_air_date.lte'] = `${parsed.yearLte}-12-31`;
-            const data = await discoverTv(params);
+            const data = await runDiscover(params);
             setResults(data);
           }
         } else {

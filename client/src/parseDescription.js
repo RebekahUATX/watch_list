@@ -41,6 +41,7 @@ const RATING_TERMS = /\b(good rating|high rated|well rated|high rating|highly ra
 const KEYWORD_TERMS = [
   // Structural / plot
   'courtroom', 'heist', 'noir', 'film noir', 'cyberpunk', 'time travel', 'zombie', 'vampire',
+  'sports', 'sports movie', 'sport',
   'superhero', 'based on novel', 'female director', 'female protagonist', 'twist ending',
   'post-apocalyptic', 'dystopia', 'romantic comedy', 'buddy', 'road movie', 'revenge',
   'psychological thriller', 'coming of age', 'found family',

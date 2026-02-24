@@ -203,9 +203,20 @@ searchRouter.get('/detail/:type/:id', async (req, res) => {
       if (us?.rating) certification = us.rating;
     }
 
-    const trailer = (videosRes.results || []).find(
-      (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
-    );
+    const videos = (videosRes.results || [])
+      .filter((v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'))
+      .filter((v) => !(v.name || '').toLowerCase().includes('short'));
+    const trailer = videos
+      .sort((a, b) => {
+        const aOfficial = a.official ? 1 : 0;
+        const bOfficial = b.official ? 1 : 0;
+        if (bOfficial !== aOfficial) return bOfficial - aOfficial;
+        const typeOrder = { Trailer: 0, Teaser: 1 };
+        const aType = typeOrder[a.type] ?? 2;
+        const bType = typeOrder[b.type] ?? 2;
+        if (aType !== bType) return aType - bType;
+        return (b.size || 0) - (a.size || 0);
+      })[0];
     const trailerKey = trailer?.key || null;
 
     res.json({ ...detail, cast, director, certification, trailerKey });

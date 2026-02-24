@@ -110,14 +110,15 @@ export function Detail() {
       </div>
       {item.trailerKey && (
         <div className="detail-trailer">
-          <a
-            href={`https://www.youtube.com/watch?v=${item.trailerKey}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="detail-trailer-link"
-          >
-            ▶ Watch trailer
-          </a>
+          <h3>Trailer</h3>
+          <div className="detail-trailer-wrap">
+            <iframe
+              title={`${title} trailer`}
+              src={`https://www.youtube.com/embed/${item.trailerKey}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
         </div>
       )}
     </div>

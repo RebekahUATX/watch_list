@@ -287,7 +287,7 @@ export function Search() {
       (entries) => {
         if (entries[0]?.isIntersecting) runSearch(currentPage + 1, true);
       },
-      { rootMargin: '200px', threshold: 0.1 }
+      { rootMargin: '400px', threshold: 0 }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -427,7 +427,7 @@ export function Search() {
               </div>
             ))}
           </div>
-          {hasMore && <div ref={loadMoreRef} className="load-more-sentinel" style={{ height: 1 }} aria-hidden />}
+          {hasMore && <div ref={loadMoreRef} className="load-more-sentinel" style={{ height: 80, marginTop: 20 }} aria-hidden />}
           {loadingMore && <p className="loading-more">Loading more…</p>}
         </>
       )}

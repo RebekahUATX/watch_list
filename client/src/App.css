@@ -522,6 +522,33 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+.detail-rating {
+  color: #d4af37;
+}
+
+.detail-director {
+  font-size: 0.95rem;
+  margin: 0.75rem 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.detail-cast {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.detail-cast strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.detail-cast ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+
 .loading {
   color: rgba(255, 255, 255, 0.6);
 }

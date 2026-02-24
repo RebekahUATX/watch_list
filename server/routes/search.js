@@ -171,14 +171,38 @@ searchRouter.get('/config', async (req, res) => {
   }
 });
 
-// Get movie or TV detail by id
+// Get movie or TV detail by id (includes credits and content rating)
 searchRouter.get('/detail/:type/:id', async (req, res) => {
   try {
     const { type, id } = req.params;
     if (type !== 'movie' && type !== 'tv') return res.status(400).json({ error: 'Invalid type' });
-    const path = type === 'movie' ? `/movie/${id}` : `/tv/${id}`;
-    const data = await tmdb(path, { language: 'en-US' });
-    res.json(data);
+    const basePath = type === 'movie' ? `/movie/${id}` : `/tv/${id}`;
+
+    const [detail, credits, extra] = await Promise.all([
+      tmdb(basePath, { language: 'en-US' }),
+      tmdb(`${basePath}/credits`, { language: 'en-US' }),
+      type === 'movie'
+        ? tmdb(`${basePath}/release_dates`, {})
+        : tmdb(`${basePath}/content_ratings`, {}),
+    ]);
+
+    if (detail.success === false) return res.json(detail);
+
+    const cast = (credits.cast || []).slice(0, 12).map((c) => ({ name: c.name, character: c.character, profile_path: c.profile_path }));
+    const directors = (credits.crew || []).filter((c) => c.job === 'Director').map((c) => c.name);
+    const director = directors.length ? directors[0] : null;
+
+    let certification = null;
+    if (type === 'movie' && extra.results) {
+      const us = extra.results.find((r) => r.iso_3166_1 === 'US');
+      const withCert = us?.release_dates?.find((d) => d.certification && d.certification.trim());
+      if (withCert?.certification) certification = withCert.certification;
+    } else if (type === 'tv' && extra.results) {
+      const us = extra.results.find((r) => r.iso_3166_1 === 'US');
+      if (us?.rating) certification = us.rating;
+    }
+
+    res.json({ ...detail, cast, director, certification });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

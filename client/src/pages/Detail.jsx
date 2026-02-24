@@ -33,6 +33,9 @@ export function Detail() {
   const title = item.title || item.name;
   const date = item.release_date || item.first_air_date;
   const poster = item.poster_path ? `${imgBase}w500${item.poster_path}` : null;
+  const vote = item.vote_average;
+  const stars5 = vote != null ? (vote / 2).toFixed(1) : null;
+  const filledStars = vote != null ? Math.round((vote / 10) * 5) : 0;
 
   return (
     <div className="detail-page">
@@ -41,10 +44,31 @@ export function Detail() {
         {poster && <img src={poster} alt="" className="detail-poster" />}
         <div className="detail-meta">
           <h1>{title}</h1>
-          <p className="detail-date">{date?.slice(0, 4)} · ★ {item.vote_average?.toFixed(1) ?? '—'}</p>
+          <p className="detail-date">
+            {date?.slice(0, 4)}
+            {item.certification && <span> · {item.certification}</span>}
+            {vote != null && (
+              <span> · <span className="detail-rating" title={`${vote.toFixed(1)}/10 on TMDB`}>
+                {'★'.repeat(filledStars)}{'☆'.repeat(5 - filledStars)} {stars5}/5
+              </span></span>
+            )}
+          </p>
           {item.overview && <p className="detail-overview">{item.overview}</p>}
           {item.genres?.length > 0 && (
             <p className="detail-genres">{item.genres.map((g) => g.name).join(', ')}</p>
+          )}
+          {item.director && (
+            <p className="detail-director"><strong>Director:</strong> {item.director}</p>
+          )}
+          {item.cast?.length > 0 && (
+            <div className="detail-cast">
+              <strong>Cast</strong>
+              <ul>
+                {item.cast.map((c, i) => (
+                  <li key={i}>{c.name}{c.character ? ` (${c.character})` : ''}</li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </div>

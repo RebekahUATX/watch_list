@@ -57,19 +57,16 @@ export function Detail() {
           {item.genres?.length > 0 && (
             <p className="detail-genres">{item.genres.map((g) => g.name).join(', ')}</p>
           )}
-          {item.director && (
-            <p className="detail-director"><strong>Director:</strong> {item.director}</p>
-          )}
-          {item.cast?.length > 0 && (
-            <div className="detail-cast">
-              <strong>Cast</strong>
-              <ul>
-                {item.cast.map((c, i) => (
-                  <li key={i}>{c.name}{c.character ? ` (${c.character})` : ''}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div className="detail-crew">
+            {item.director && (
+              <p className="detail-director"><strong>Director:</strong> {item.director}</p>
+            )}
+            {item.cast?.length > 0 && (
+              <p className="detail-cast">
+                <strong>Cast:</strong> {item.cast.slice(0, 3).map((c) => c.name).join(', ')}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
